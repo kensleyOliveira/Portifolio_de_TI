@@ -1,9 +1,3 @@
-Aqui está uma estrutura completa e profissional para o seu `README.md`, redigida com foco em engenharia de software e pronta para destacar suas habilidades no portfólio.
-
-O texto foi formatado para o GitHub (Markdown) e destaca as decisões arquiteturais modernas que discutimos, além de integrar o ecossistema completo de hardware e software.
-
----
-
 # 🌾 AgroStock - Plataforma IoT de Monitoramento Agrícola
 
 O **AgroStock** é um ecossistema completo de Internet das Coisas (IoT) projetado para o monitoramento de telemetria em tempo real e previsão climática, com foco na precisão de dados para o campo (aplicado inicialmente no contexto agrícola de Monte Carmelo - MG).
