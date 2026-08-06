@@ -1,0 +1,4 @@
+paho-mqtt
+mysql-connector-python
+certifi
+python-dotenv
