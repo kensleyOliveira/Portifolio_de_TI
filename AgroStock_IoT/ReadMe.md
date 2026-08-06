@@ -77,7 +77,7 @@ O AgroStock foi concebido sob o princípio do *Privacy by Design*.
 
 ## 📱 Mural de Imagens (App em Uso)
 
-	![App em ação](./Image/App.png)
+	![App em ação](./Image/Aplicativo.png)
 ---
 
 **Desenvolvido por:** Kensley Alves de Oliveira | *Bacharelando em Sistemas de Informação*
