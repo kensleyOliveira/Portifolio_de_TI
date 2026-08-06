@@ -23,7 +23,7 @@ A jornada do dado no AgroStock segue um pipeline estruturado e contínuo:
 5. **Consumo (Mobile):** O aplicativo Android consome a API, renderizando gráficos de tendência (`AgroSparkline`) e cards informativos em tempo real para o usuário final.
 
 
-	![Fluxo do Sistema em Arquitetura de três camadas](/Image/Arquitetura_tres_camada_AgroStock.png)
+	![Fluxo do Sistema em Arquitetura de três camadas](./Image/Arquitetura_tres_camada_AgroStock.png)
 
 ---
 
@@ -83,7 +83,7 @@ O AgroStock foi concebido sob o princípio do *Privacy by Design*.
 
 ## 📱 Mural de Imagens (App em Uso)
 
-	![App em ação](/Imagem/App.png)
+	![App em ação](./Image/App.png)
 ---
 
 **Desenvolvido por:** Kensley Alves de Oliveira | *Bacharelando em Sistemas de Informação*
