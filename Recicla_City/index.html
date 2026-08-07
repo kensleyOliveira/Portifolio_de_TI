@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+  <title>Recicla City: Missão Limpeza</title>
+  <style>
+    :root{--green:#4caf50;--dark:#111827;--panel:rgba(10,16,30,.82)}
+    *{box-sizing:border-box;margin:0;padding:0;user-select:none}
+    html,body{width:100%;height:100%;overscroll-behavior:none}
+    body{min-height:100vh;min-height:100dvh;display:grid;place-items:center;background:radial-gradient(circle at top,#26365f,#101426 70%);color:#fff;font-family:Segoe UI,Tahoma,sans-serif;overflow:hidden}
+    #game{position:relative;width:min(100vw,1100px,calc(100dvh * 1.410256));height:min(100dvh,780px,calc(100vw / 1.410256));aspect-ratio:1100/780;background:#202842;border:3px solid #52638c;border-radius:16px;overflow:hidden;box-shadow:0 18px 60px #000b}
+    canvas{display:block;width:100%;height:100%;touch-action:none}
+    .screen{position:absolute;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;background:linear-gradient(160deg,rgba(16,20,38,.96),rgba(24,38,52,.96));overflow:auto}
+    #menu{align-items:flex-start;text-align:left;padding-left:7%;padding-right:52%;background:linear-gradient(90deg,rgba(3,28,23,.97) 0%,rgba(3,28,23,.82) 37%,rgba(3,28,23,.12) 67%),url('assets/recicla-city-abertura-v2.png') center/cover no-repeat}
+    #menu h1{text-align:left;max-width:500px}#menu .subtitle{color:#eefdf2;max-width:460px}#menu .legend{justify-content:flex-start;max-width:470px}
+    #global-credit{position:absolute;z-index:35;left:0;right:0;bottom:0;padding:11px 20px;text-align:center;background:linear-gradient(90deg,rgba(1,18,15,.82),rgba(1,35,28,.98),rgba(1,18,15,.82));border-top:1px solid #86efac88;color:#ecfdf5;font-size:.8rem;font-weight:650;letter-spacing:.025em;text-shadow:0 1px 3px #000;pointer-events:none}
+    .hidden{display:none!important}
+    h1{font-size:clamp(2rem,6vw,3.5rem);color:#6ee787;text-shadow:0 3px 18px #42c55b55;margin-bottom:8px}
+    h2{font-size:clamp(1.6rem,4vw,2.4rem);margin-bottom:22px}
+    .subtitle{color:#c7d2fe;font-size:clamp(.95rem,2vw,1.15rem);margin:0 0 25px;max-width:650px}
+    .btn{border:0;border-radius:28px;padding:13px 30px;background:linear-gradient(135deg,#53c96a,#27863b);box-shadow:0 6px 18px #2ba34666;color:white;font-size:1.05rem;font-weight:800;cursor:pointer}
+    .btn:hover{filter:brightness(1.13);transform:translateY(-1px)}
+    .legend{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:18px 0}
+    .chip{padding:6px 10px;border-radius:12px;font-size:.78rem;font-weight:800;color:white;border:1px solid #fff8;text-shadow:0 1px 2px #000}
+    .levels{display:grid;grid-template-columns:repeat(2,minmax(150px,210px));gap:14px;margin-bottom:22px}
+    .level{padding:15px 10px;background:#273352;border:2px solid #52638c;border-radius:14px;cursor:pointer;transition:.2s}
+    .level:hover:not(.locked){border-color:#69df7d;transform:translateY(-3px)}
+    .level.locked{opacity:.38;cursor:not-allowed;filter:grayscale(1)}
+    .level h3{margin-bottom:5px}.level p{color:#a5b4fc;font-size:.85rem}.level small{color:#cbd5e1}
+    #hud{position:absolute;inset:0;z-index:10;pointer-events:none;padding:12px;display:flex;flex-direction:column;justify-content:space-between}
+    .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+    .game-actions{position:absolute;right:12px;top:66px;display:flex;gap:7px;pointer-events:auto;padding:5px;background:rgba(7,15,28,.68);border:1px solid #ffffff24;border-radius:14px;backdrop-filter:blur(5px)}
+    .action-btn{min-height:40px;padding:8px 12px;border:2px solid #fff8;border-radius:11px;color:#fff;font-weight:800;font-size:.82rem;cursor:pointer;box-shadow:0 3px 10px #0005;transition:.15s}
+    .action-btn:hover,.action-btn:focus-visible{filter:brightness(1.18);outline:3px solid #fff;outline-offset:2px}
+    .action-btn:active{transform:scale(.96)}
+    .action-btn:disabled{opacity:.55;cursor:not-allowed;filter:grayscale(.5)}
+    #pause{background:#1d4ed8}#restart{background:#a16207}#exit{background:#b91c1c}
+    #area-status{border-color:#f6d487;background:rgba(117,79,26,.88)}
+    #area-status.water{border-color:#67e8f9;background:rgba(3,105,161,.9);animation:pulse 1s 2}
+    .panel{background:var(--panel);border:2px solid #4ade80;border-radius:15px;padding:8px 12px;backdrop-filter:blur(4px);font-weight:700}
+    #progress{width:min(280px,35vw)}
+    .bar{height:8px;margin-top:5px;background:#ffffff29;border-radius:8px;overflow:hidden}.bar>div{height:100%;width:0;background:#4ade80;transition:.25s}
+    #inventory{align-self:center;display:flex;gap:4px;background:var(--panel);padding:7px;border-radius:13px;border:2px solid #64748b;margin-bottom:5px}
+    .slot{width:28px;height:28px;border:1px dashed #94a3b8;border-radius:6px;display:grid;place-items:center;font:800 .65rem sans-serif;text-shadow:0 1px #000}
+    #message{position:absolute;left:50%;bottom:64px;transform:translateX(-50%) translateY(8px);max-width:min(620px,50vw);padding:10px 18px;background:#0f172af2;border:2px solid #fbbf24;border-radius:15px;font-weight:800;text-align:center;opacity:0;transition:.2s;white-space:normal;box-shadow:0 7px 24px #0008;backdrop-filter:blur(5px)}
+    #message.show{opacity:1;transform:translateX(-50%) translateY(0)}
+    #timer.urgent{border-color:#f97316;background:rgba(124,45,18,.9);animation:timerUrgent .45s infinite alternate}
+    #timer.critical{border-color:#ef4444;background:rgba(127,29,29,.94);animation:timerUrgent .18s infinite alternate}
+    @keyframes timerUrgent{from{transform:scale(1);box-shadow:0 0 0 #ef444400}to{transform:scale(1.055);box-shadow:0 0 18px #ef444477}}
+    #controls{position:absolute;right:14px;bottom:15px;z-index:12;display:grid;grid-template-columns:repeat(3,52px);grid-template-rows:repeat(3,52px);gap:4px;pointer-events:auto}
+    .move{border:2px solid #fff8;border-radius:14px;background:#101827c7;color:#fff;font-size:1.45rem;font-weight:bold;touch-action:none;cursor:pointer}
+    .move:active{background:#4caf50;transform:scale(.94)}
+    .up{grid-column:2}.left{grid-row:2;grid-column:1}.down{grid-row:2;grid-column:2}.right{grid-row:2;grid-column:3}
+    #control-note{position:absolute;right:14px;bottom:8px;transform:translateY(100%);font-size:.65rem;color:#fff}
+    .result{padding:18px 26px;background:#ffffff0b;border:1px solid #ffffff25;border-radius:14px;margin-bottom:22px;line-height:1.8}
+    .tutorial-card{width:min(680px,94vw);padding:26px;background:#202b46;border:2px solid #60a5fa;border-radius:18px;text-align:left;box-shadow:0 18px 55px #0009}
+    .tutorial-card h2{text-align:center;margin-bottom:8px}.tutorial-card .phase-name{text-align:center;color:#86efac;font-weight:800;margin-bottom:18px}
+    .tutorial-card ul{margin:0 0 22px 22px;line-height:1.65;color:#e2e8f0}.tutorial-card li+li{margin-top:6px}
+    .tutorial-visual{height:118px;margin:15px 0 20px;padding:14px;display:flex;align-items:center;justify-content:center;gap:12px;border-radius:16px;background:linear-gradient(135deg,#0d4b38,#17305a);border:1px solid #86efac66;font-size:2.2rem;box-shadow:inset 0 0 30px #0004}
+    .tutorial-step{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-width:82px}.tutorial-step b{min-height:42px;display:flex;align-items:center;justify-content:center;line-height:1;font-size:1.8rem}.tutorial-step span{max-width:88px;font-size:.68rem;line-height:1.15;text-align:center;color:#e2e8f0;font-weight:800}.tutorial-arrow{font-size:1.25rem;color:#86efac}
+    .bench-mini{position:relative;display:block;width:58px;height:40px}.bench-mini:before,.bench-mini:after{content:"";position:absolute;left:4px;width:50px;border-radius:4px;background:linear-gradient(#a86b35,#70401f);border:2px solid #d69a55}.bench-mini:before{top:5px;height:11px}.bench-mini:after{top:21px;height:9px}.bench-mini i{position:absolute;top:29px;width:5px;height:10px;background:#3b4654}.bench-mini i:first-child{left:12px}.bench-mini i:last-child{right:12px}
+    .tutorial-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+    .victory-landscape{width:min(620px,90vw);height:105px;margin:4px 0 18px;border-radius:18px;display:flex;align-items:center;justify-content:center;gap:22px;font-size:2.6rem;background:linear-gradient(#83ddff 0 52%,#5ac66e 53%);border:2px solid #fff8;box-shadow:inset 0 -14px 25px #146b3155,0 8px 25px #052e1644;overflow:hidden}
+    .credits-list{width:min(620px,92vw);padding:24px;background:#ffffff0c;border:1px solid #ffffff2b;border-radius:16px;line-height:1.8;margin-bottom:22px}
+    #confirm{background:rgba(7,12,24,.75);backdrop-filter:blur(5px)}
+    .dialog{width:min(440px,92vw);padding:27px;background:#202b46;border:2px solid #94a3b8;border-radius:18px;box-shadow:0 18px 55px #000a;text-align:left}
+    .dialog h2{margin-bottom:10px}.dialog p{color:#dbeafe;line-height:1.5;margin-bottom:22px}.dialog-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
+    .btn.secondary{background:#475569;box-shadow:none}.btn.danger{background:linear-gradient(135deg,#dc2626,#991b1b);box-shadow:0 5px 15px #7f1d1d66}
+    #result.eco{justify-content:flex-end;padding-bottom:28px;background:linear-gradient(180deg,transparent 0%,transparent 48%,rgba(3,20,15,.35) 61%,rgba(3,20,15,.94) 100%);color:#fff}
+    #result.eco h1{font-size:clamp(1.8rem,4vw,2.8rem);margin-bottom:3px;color:#fff;text-shadow:0 3px 15px #052e16,0 1px 3px #000}
+    #result.eco .subtitle{margin-bottom:8px;color:#f0fff2;text-shadow:0 2px 5px #000}
+    #result.eco .victory-landscape{display:none}
+    #result.eco .result{margin-bottom:10px;padding:9px 28px;background:rgba(2,18,13,.78);border-color:#86efac88;line-height:1.45;backdrop-filter:blur(5px)}
+    #result.eco .btn{padding:11px 28px}
+    #campaign-summary{width:min(540px,90vw);margin:0 0 10px;padding:10px 16px;background:rgba(2,18,13,.86);border:1px solid #86efac88;border-radius:13px;backdrop-filter:blur(6px)}
+    #campaign-summary h3{margin-bottom:6px;color:#bbf7d0}#campaign-summary table{width:100%;border-collapse:collapse;font-size:.8rem}#campaign-summary th,#campaign-summary td{padding:4px 7px;border-bottom:1px solid #ffffff20;text-align:center}#campaign-summary th:first-child,#campaign-summary td:first-child{text-align:left}#campaign-summary tfoot{font-weight:900;color:#fde68a}
+    .intro-loop{max-width:470px;margin:-12px 0 12px;color:#bbf7d0;font-size:.92rem;line-height:1.45;font-weight:650}
+    #rotate-device{display:none;position:fixed;inset:0;z-index:100;align-items:center;justify-content:center;padding:28px;background:#07111df2;color:#fff;text-align:center;font-size:1.15rem;font-weight:800;line-height:1.5;pointer-events:none}
+    #rotate-device b{display:block;font-size:3.2rem;margin-bottom:12px;animation:rotatePhone 1.4s ease-in-out infinite alternate}
+    @keyframes rotatePhone{from{transform:rotate(0)}to{transform:rotate(90deg)}}
+    @media(max-width:650px){#game{border:0;border-radius:0}#menu{padding:25px;align-items:center;text-align:center;background:linear-gradient(rgba(3,28,23,.82),rgba(3,28,23,.9)),url('assets/recicla-city-abertura-v2.png') center/cover no-repeat}#menu h1{text-align:center}#menu .legend{justify-content:center}.levels{grid-template-columns:repeat(2,1fr)}#controls{grid-template-columns:repeat(3,46px);grid-template-rows:repeat(2,46px)}.panel{font-size:.72rem;padding:6px 8px}#progress{width:32vw}.tutorial-visual{font-size:1.6rem;gap:4px}.tutorial-step{min-width:55px}}
+    @media(orientation:portrait) and (hover:none) and (pointer:coarse){body.mobile-session #rotate-device{display:flex}}
+    @media(orientation:landscape) and (hover:none) and (pointer:coarse){#game{width:100vw;height:100dvh;max-width:none;max-height:none;border:0;border-radius:0}.screen{padding-top:max(12px,env(safe-area-inset-top));padding-right:max(18px,env(safe-area-inset-right));padding-bottom:max(12px,env(safe-area-inset-bottom));padding-left:max(18px,env(safe-area-inset-left))}}
+  </style>
+</head>
+<body>
+<main id="game">
+  <canvas id="canvas" width="1100" height="780" aria-label="Área do jogo"></canvas>
+  <section id="hud" class="hidden">
+    <div class="topbar">
+      <div id="timer" class="panel">⏱ <span>120.0</span>s</div>
+      <div id="speed-status" class="panel hidden" aria-live="polite">⚡ Aceleração: <span>0.0</span>s</div>
+      <div id="assist-status" class="panel hidden" aria-live="polite">🌟 Assistência ativa</div>
+      <div id="area-status" class="panel hidden" aria-live="polite">🏖 Areia: controles normais</div>
+      <div id="progress" class="panel">♻ Coletados: <span>0/0</span><div class="bar"><div></div></div></div>
+      <div class="panel">⭐ <span id="score">0</span><br><small id="combo"></small></div>
+    </div>
+    <div id="message">Mensagem</div>
+    <nav class="game-actions" aria-label="Ações da partida">
+      <button id="pause" class="action-btn" type="button" title="Pausar a partida">⏸ Pausar</button>
+      <button id="restart" class="action-btn" type="button" title="Reiniciar esta fase">↻ Reiniciar</button>
+      <button id="exit" class="action-btn" type="button" title="Sair para a seleção de fases">✕ Sair</button>
+    </nav>
+    <div id="inventory"></div>
+  </section>
+  <div id="controls" class="hidden" aria-label="Controles de movimento">
+    <button class="move up" data-dir="up" aria-label="Subir">▲</button>
+    <button class="move left" data-dir="left" aria-label="Esquerda">◀</button>
+    <button class="move down" data-dir="down" aria-label="Descer">▼</button>
+    <button class="move right" data-dir="right" aria-label="Direita">▶</button>
+  </div>
+
+  <section id="menu" class="screen">
+    <h1>Recicla City</h1>
+    <p class="subtitle">Missão Limpeza — transforme áreas poluídas em ambientes verdes!</p>
+    <p class="intro-loop">Explore o cenário, colete os resíduos, administre a mochila, separe cada material e veja o ambiente ganhar vida.</p>
+    <button class="btn" id="play">Jogar</button>
+    <button class="btn secondary" id="open-credits" style="margin-top:12px">Créditos</button>
+    <div class="legend">
+      <span class="chip" style="background:#1976d2">P · Papel · azul</span><span class="chip" style="background:#e0b900;color:#111;text-shadow:none">M · Metal/latas · amarelo</span>
+      <span class="chip" style="background:#d32f2f">PL · Plástico · vermelho</span><span class="chip" style="background:#2e7d32">V · Vidro · verde</span>
+    </div>
+    <small>Mouse, setas, WASD ou botões na tela • Clique no chão ou diretamente nas lixeiras</small>
+  </section>
+
+  <footer id="global-credit">Guilda Mestres da Gambiarra · Kensley · Pedro Paulo · Tatiana · Thomaz · 2026</footer>
+
+  <section id="level-screen" class="screen hidden">
+    <h2>Escolha a fase</h2>
+    <div class="levels">
+      <article class="level" data-level="1"><h3>1 · Praça Escola</h3><p>Movimento, coleta e separação</p><small>12 resíduos · papel, latas e plástico</small></article>
+      <article class="level locked" data-level="2"><h3>2 · Parque Central</h3><p>Bancos, flores e aceleração</p><small>14 resíduos · quatro categorias clássicas</small></article>
+      <article class="level locked" data-level="3"><h3>3 · Cidade Ventosa</h3><p>Vento, cones e mochila extra</p><small>18 resíduos · papel e plástico se movem</small></article>
+      <article class="level locked" data-level="4"><h3>4 · Praia Limpa</h3><p>Areia cinza, mar e correnteza</p><small>20 resíduos · revitalização amarela</small></article>
+    </div>
+    <button class="btn" id="back">Voltar</button>
+  </section>
+
+  <section id="result" class="screen hidden">
+    <h1 id="result-title">Área revitalizada! 🌱</h1>
+    <p class="subtitle" id="result-text"></p>
+    <div id="victory-landscape" class="victory-landscape" aria-label="Paisagem recuperada">🌳 🌼 🦋 🌱 🌻</div>
+    <div class="result">Pontuação: <strong id="final-score">0</strong><br>Tempo restante: <strong id="final-time">0</strong>s</div>
+    <div id="campaign-summary" class="hidden"><h3>Resumo da campanha</h3><table><thead><tr><th>Fase</th><th>Pontos</th><th>Tempo</th></tr></thead><tbody id="summary-body"></tbody><tfoot><tr><td>Total</td><td id="summary-score">0</td><td id="summary-time">0s</td></tr></tfoot></table></div>
+    <button class="btn" id="next">Próxima fase</button>
+  </section>
+
+  <section id="tutorial" class="screen hidden">
+    <div class="tutorial-card">
+      <h2 id="tutorial-title">Tutorial</h2>
+      <p id="tutorial-phase" class="phase-name"></p>
+      <div id="tutorial-visual" class="tutorial-visual" aria-label="Resumo ilustrado da fase"></div>
+      <ul id="tutorial-list"></ul>
+      <div class="tutorial-actions">
+        <button class="btn secondary" id="tutorial-back" type="button">Voltar</button>
+        <button class="btn" id="tutorial-start" type="button">Começar fase</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="credits" class="screen hidden">
+    <h1>Créditos</h1>
+    <div class="credits-list">
+      <p><strong>Recicla City: Missão Limpeza</strong></p>
+      <p>Conceito e desenvolvimento: Guilda Mestres da Gambiarra</p>
+      <p>Integrantes: Kensley, Pedro Paulo, Tatiana e Thomaz</p>
+      <p>Protótipo educativo sobre coleta seletiva, preservação urbana e proteção dos oceanos.</p>
+      <p>Design, programação e sons sintetizados em HTML5 Canvas e Web Audio API.</p>
+    </div>
+    <button class="btn" id="credits-back" type="button">Voltar ao menu</button>
+  </section>
+
+  <section id="confirm" class="screen hidden" role="dialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-text">
+    <div class="dialog">
+      <h2 id="confirm-title">Confirmar ação</h2>
+      <p id="confirm-text">O progresso atual será perdido.</p>
+      <div class="dialog-actions">
+        <button class="btn secondary" id="cancel-action" type="button">Cancelar</button>
+        <button class="btn danger" id="confirm-action" type="button">Confirmar</button>
+      </div>
+    </div>
+  </section>
+
+  <section id="pause-screen" class="screen hidden" role="dialog" aria-modal="true" aria-labelledby="pause-title" style="background:rgba(5,12,24,.78);backdrop-filter:blur(7px)">
+    <div class="dialog" style="text-align:center">
+      <h2 id="pause-title">Jogo pausado</h2>
+      <p>O cronômetro, o vento, a aceleração e a música estão pausados.</p>
+      <button class="btn" id="resume" type="button">▶ Continuar</button>
+    </div>
+  </section>
+</main>
+<div id="rotate-device" role="status" aria-live="polite"><div><b>📱</b>Gire o celular para jogar na horizontal</div></div>
+<script>
+  'use strict';
+  const canvas=document.querySelector('#canvas'),ctx=canvas.getContext('2d');
+  const W=1100,H=780,MAP=14,TW=66,TH=33,OX=550,OY=125;
+  const TYPES={
+    Papel:{color:'#1976d2',letter:'P',colorName:'azul',label:'Papel'},Metal:{color:'#f5c400',letter:'M',colorName:'amarela',label:'Metal/lata'},
+    Plastico:{color:'#d32f2f',letter:'PL',colorName:'vermelha',label:'Plástico'},Vidro:{color:'#2e7d32',letter:'V',colorName:'verde',label:'Vidro'}
+  };
+  // ================================================================
+  // TEMPO DAS FASES: edite o valor "time" abaixo (em segundos).
+  // Exemplo: time:165 significa 2 minutos e 45 segundos.
+  // "count" controla a quantidade de resíduos de cada fase.
+  // ================================================================
+  const levelDefs={
+    1:{name:'Praça Escola',time:170,count:12,types:['Papel','Metal','Plastico']},
+    2:{name:'Parque Central',time:190,count:14,types:['Papel','Metal','Plastico','Vidro']},
+    3:{name:'Cidade Ventosa',time:185,count:18,types:['Papel','Metal','Plastico','Vidro'],wind:true},
+    4:{name:'Praia Limpa',time:135,count:20,types:['Papel','Metal','Plastico','Vidro'],beach:true}
+  };
+  const tutorials={
+    1:['Clique com o mouse em um quadrado ou use setas, WASD e botões para se movimentar.','Encoste nos resíduos para guardá-los na mochila.','Separe pelas letras e cores: P azul, M amarelo e PL vermelho.','Clique numa lixeira ou encoste nela para depositar. Depósitos errados retiram tempo.'],
+    2:['Agora entram as quatro categorias clássicas: papel, metal/latas, plástico e vidro.','Bancos bloqueiam o caminho; flores são decorativas e podem ser atravessadas.','A mochila comporta 10 itens. Planeje uma rota de ida e volta às lixeiras.','Use os bônus ⚡ para atravessar o parque com rapidez.'],
+    3:['O vento move papéis e plásticos pelo cenário. Observe as rajadas.','Cones e bancos bloqueiam algumas passagens.','Procure a mochila 🎒: ela aumenta permanentemente a capacidade nesta tentativa.','O indicador ⚡ mostra o tempo restante da aceleração e avisa antes de terminar.'],
+    4:['A praia começa cinzenta. Cada coleta devolve tons amarelos à areia e brilho azul à água.','Na areia, os controles funcionam normalmente.','Ao entrar no mar, a correnteza inverte esquerda e direita; acompanhe o indicador superior.','Garrafas aparecem com mais frequência na água.','Pedras, bancos e guarda-sóis formam o circuito da praia.','Limpe tudo para recuperar completamente o mar.']
+  };
+  let state='menu',level=1,pendingLevel=1,unlocked=1,score=0,combo=1,time=0,total=0,deposited=0,last=performance.now(),msgTimer=0,windClock=0,allGreen=0,bagAlarmCooldown=0,pendingAction=null,boostTime=0,boostBeepSecond=0,boostRhythmClock=0,boostRhythmStep=0,urgencyClock=0,urgencyStep=0,wasInWater=false,musicTimer=null,musicStep=0,mousePath=[],mouseDepositBin=null,assistMode=false,campaignResults={};
+  let hero,trash=[],bins=[],obstacles=[],boosts=[],upgrades=[],nature=[],clean=[],particles=[];
+  try{campaignResults=JSON.parse(localStorage.getItem('recicla-campaign-results')||'{}')}catch{campaignResults={}}
+  const iso=(x,y)=>({x:OX+(x-y)*TW/2,y:OY+(x+y)*TH/2});
+  const inside=(x,y)=>x>=0&&y>=0&&x<MAP&&y<MAP;
+  const same=(a,b)=>Math.round(a.x)===Math.round(b.x)&&Math.round(a.y)===Math.round(b.y);
+  function rand(n){return Math.floor(Math.random()*n)}
+  function show(id){document.querySelectorAll('.screen').forEach(e=>e.classList.add('hidden'));document.querySelector('#hud').classList.add('hidden');document.querySelector('#controls').classList.add('hidden');document.querySelector('#global-credit').classList.toggle('hidden',id!=='menu');if(id==='game'){document.querySelector('#hud').classList.remove('hidden');document.querySelector('#controls').classList.remove('hidden')}else document.querySelector('#'+id).classList.remove('hidden')}
+  function openConfirmation(action){
+    if(state!=='play')return;pendingAction=action;state='confirm';
+    const restarting=action==='restart';
+    document.querySelector('#confirm-title').textContent=restarting?'Reiniciar a fase?':'Sair da fase?';
+    document.querySelector('#confirm-text').textContent=restarting?'A pontuação, os itens coletados e o tempo desta tentativa serão reiniciados.':'O progresso desta tentativa será perdido e você voltará à seleção de fases.';
+    document.querySelector('#confirm-action').textContent=restarting?'Sim, reiniciar':'Sim, sair';
+    document.querySelector('#confirm').classList.remove('hidden');
+    document.querySelector('#confirm-action').focus();
+  }
+  function closeConfirmation(){document.querySelector('#confirm').classList.add('hidden');pendingAction=null;state='play';document.querySelector('#restart').focus()}
+  function pauseGame(){if(state!=='play')return;state='paused';stopMusic();document.querySelector('#pause-screen').classList.remove('hidden');document.querySelector('#resume').focus()}
+  function resumeGame(){if(state!=='paused')return;document.querySelector('#pause-screen').classList.add('hidden');state='play';startMusic(level);document.querySelector('#pause').focus()}
+  function message(text,color='#fbbf24'){const e=document.querySelector('#message');e.textContent=text;e.style.borderColor=color;e.classList.add('show');msgTimer=1.6}
+  // Sons preservados do primeiro modelo: pop, chime e error.
+  function audio(kind){
+    try{
+      const ac=audio.ac||(audio.ac=new (AudioContext||webkitAudioContext)()),o=ac.createOscillator(),g=ac.createGain(),now=ac.currentTime;
+      o.connect(g);g.connect(ac.destination);
+      if(kind==='pick'){
+        o.type='sine';o.frequency.setValueAtTime(400,now);o.frequency.exponentialRampToValueAtTime(1200,now+.08);
+        g.gain.setValueAtTime(.15,now);g.gain.linearRampToValueAtTime(.01,now+.08);o.start();o.stop(now+.08);
+      }else if(kind==='good'){
+        o.type='triangle';o.frequency.setValueAtTime(600,now);o.frequency.setValueAtTime(900,now+.08);o.frequency.exponentialRampToValueAtTime(1500,now+.2);
+        g.gain.setValueAtTime(.1,now);g.gain.linearRampToValueAtTime(.01,now+.25);o.start();o.stop(now+.25);
+      }else{
+        o.type='sawtooth';o.frequency.setValueAtTime(180,now);o.frequency.linearRampToValueAtTime(100,now+.25);
+        g.gain.setValueAtTime(.12,now);g.gain.linearRampToValueAtTime(.01,now+.25);o.start();o.stop(now+.25);
+      }
+    }catch{}
+  }
+  function bagAlarm(){if(bagAlarmCooldown>0)return;bagAlarmCooldown=1.8;audio('bad')}
+  function stopMusic(){if(musicTimer){clearInterval(musicTimer);musicTimer=null}}
+  function startMusic(lvl){
+    stopMusic();musicStep=0;
+    const songs={1:[261,329,392,329,294,349,440,349],2:[220,277,330,392,330,277,247,330],3:[196,233,294,349,294,233,174,220],4:[246,311,370,415,370,311,277,349]},notes=songs[lvl];
+    const playNote=()=>{try{const ac=audio.ac||(audio.ac=new (AudioContext||webkitAudioContext)()),o=ac.createOscillator(),g=ac.createGain(),now=ac.currentTime;o.connect(g);g.connect(ac.destination);o.type=lvl===4?'sine':lvl===3?'sawtooth':'triangle';o.frequency.setValueAtTime(notes[musicStep++%notes.length],now);g.gain.setValueAtTime(.018,now);g.gain.exponentialRampToValueAtTime(.001,now+.38);o.start();o.stop(now+.4)}catch{}};
+    playNote();musicTimer=setInterval(playNote,lvl===3?460:lvl===4?650:560);
+  }
+  function playBoostTick(){try{const ac=audio.ac||(audio.ac=new (AudioContext||webkitAudioContext)()),o=ac.createOscillator(),g=ac.createGain(),now=ac.currentTime,notes=[660,784,880,1046];o.connect(g);g.connect(ac.destination);o.type='square';o.frequency.setValueAtTime(notes[boostRhythmStep++%notes.length],now);g.gain.setValueAtTime(.026,now);g.gain.exponentialRampToValueAtTime(.001,now+.075);o.start();o.stop(now+.08)}catch{}}
+  function playUrgencyTick(){try{const ac=audio.ac||(audio.ac=new (AudioContext||webkitAudioContext)()),o=ac.createOscillator(),g=ac.createGain(),now=ac.currentTime,notes=time<=5?[880,1174]:time<=10?[698,880]:[523,659];o.connect(g);g.connect(ac.destination);o.type='square';o.frequency.setValueAtTime(notes[urgencyStep++%2],now);g.gain.setValueAtTime(.038,now);g.gain.exponentialRampToValueAtTime(.001,now+.065);o.start();o.stop(now+.07)}catch{}}
+  class Hero{
+    constructor(){this.x=7;this.y=7;this.tx=7;this.ty=7;this.inventory=[];this.max=(level===2?10:7)+(assistMode?3:0)}
+    update(dt){const k=Math.min(1,dt*9*(boostTime>0?1.85:1));this.x+=(this.tx-this.x)*k;this.y+=(this.ty-this.y)*k;if(Math.abs(this.x-this.tx)<.02){this.x=this.tx;this.y=this.ty}}
+    draw(){const p=iso(this.x,this.y),moving=this.x!==this.tx||this.y!==this.ty,bob=moving?Math.sin(performance.now()*.018)*2:0;ctx.save();ctx.translate(p.x,p.y+bob);ctx.fillStyle='#07131f55';ctx.beginPath();ctx.ellipse(0,18,18,7,0,0,7);ctx.fill();ctx.strokeStyle='#173f32';ctx.lineWidth=6;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(-5,9);ctx.lineTo(-7,20);ctx.moveTo(5,9);ctx.lineTo(8,20);ctx.stroke();ctx.strokeStyle='#f4f4e9';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-7,20);ctx.lineTo(-12,21);ctx.moveTo(8,20);ctx.lineTo(13,21);ctx.stroke();const body=ctx.createLinearGradient(-12,-10,12,12);body.addColorStop(0,'#73e59b');body.addColorStop(.55,'#16a9b5');body.addColorStop(1,'#08747f');ctx.fillStyle=body;ctx.beginPath();ctx.roundRect(-12,-11,24,26,7);ctx.fill();ctx.strokeStyle='#d9fff4';ctx.lineWidth=1.5;ctx.stroke();ctx.strokeStyle='#ffcc9b';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-11,-4);ctx.lineTo(-17,7);ctx.moveTo(11,-4);ctx.lineTo(17,7);ctx.stroke();ctx.fillStyle='#1d713e';ctx.beginPath();ctx.roundRect(-18,-8,8,20,3);ctx.fill();ctx.fillStyle='#8df0a4';ctx.fillRect(-16,-4,4,9);ctx.fillStyle='#ffcf9f';ctx.beginPath();ctx.arc(0,-20,10,0,7);ctx.fill();ctx.fillStyle='#452a1b';ctx.beginPath();ctx.arc(0,-23,10,Math.PI,Math.PI*2);ctx.fill();ctx.beginPath();ctx.arc(-7,-22,5,2.8,5.6);ctx.fill();ctx.fillStyle='#263238';ctx.beginPath();ctx.arc(-3,-20,1.2,0,7);ctx.arc(4,-20,1.2,0,7);ctx.fill();ctx.strokeStyle='#884c36';ctx.lineWidth=1;ctx.beginPath();ctx.arc(1,-16,3,0,Math.PI);ctx.stroke();ctx.restore()}
+  }
+  class Trash{
+    constructor(x,y,type,water=false){this.x=x;this.y=y;this.type=type;this.active=true;this.water=water;this.phase=Math.random()*6}
+    draw(t){if(!this.active)return;const p=iso(this.x,this.y),bob=Math.sin(t*3+this.phase)*(this.water?3:1),c=TYPES[this.type].color;ctx.save();ctx.translate(p.x,p.y-6+bob);ctx.shadowColor='#02061799';ctx.shadowBlur=5;ctx.shadowOffsetY=4;if(this.type==='Papel'){ctx.rotate(Math.sin(t*2+this.phase)*.18);ctx.fillStyle=c;ctx.beginPath();ctx.moveTo(-10,-9);ctx.lineTo(8,-11);ctx.lineTo(10,6);ctx.lineTo(-9,7);ctx.closePath();ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#dbeafe';ctx.stroke();ctx.strokeStyle='#ffffff99';ctx.beginPath();ctx.moveTo(-6,-5);ctx.lineTo(5,-6);ctx.moveTo(-5,-1);ctx.lineTo(6,-2);ctx.stroke()}else if(this.type==='Vidro'||this.type==='Plastico'){const g=ctx.createLinearGradient(-7,0,7,0);g.addColorStop(0,c);g.addColorStop(.48,'#ffffffcc');g.addColorStop(.62,c);ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(-6,-15,12,20,4);ctx.fill();ctx.fillStyle=c;ctx.fillRect(-3,-20,6,6);ctx.shadowBlur=0;ctx.fillStyle='#fff8';ctx.fillRect(-3,-11,2,9)}else if(this.type==='Metal'){ctx.fillStyle=c;ctx.beginPath();ctx.roundRect(-8,-14,16,19,4);ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#fff9';ctx.beginPath();ctx.ellipse(0,-14,8,3,0,0,7);ctx.stroke();ctx.fillStyle='#ffffff66';ctx.fillRect(-5,-8,10,2)}else{ctx.fillStyle=c;ctx.beginPath();ctx.ellipse(0,-5,9,10,0,0,7);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#7acb57';ctx.beginPath();ctx.ellipse(5,-14,4,7,.6,0,7);ctx.fill()}ctx.shadowBlur=0;ctx.fillStyle=this.type==='Metal'?'#2b2b20':'#fff';ctx.font='bold 8px sans-serif';ctx.textAlign='center';ctx.fillText(TYPES[this.type].letter,0,-3);ctx.restore()}
+  }
+  class Bin{
+    constructor(x,y,type){this.x=x;this.y=y;this.type=type}
+    draw(){const p=iso(this.x,this.y),c=TYPES[this.type].color;ctx.save();ctx.fillStyle='#02061766';ctx.beginPath();ctx.ellipse(p.x,p.y+15,19,7,0,0,7);ctx.fill();ctx.shadowColor=c;ctx.shadowBlur=15;const g=ctx.createLinearGradient(p.x-18,0,p.x+18,0);g.addColorStop(0,'#172033');g.addColorStop(.18,c);g.addColorStop(.72,c);g.addColorStop(1,'#172033');ctx.fillStyle=g;ctx.beginPath();ctx.roundRect(p.x-17,p.y-21,34,36,5);ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#ffffffcc';ctx.lineWidth=1.5;ctx.stroke();ctx.fillStyle='#202939';ctx.beginPath();ctx.roundRect(p.x-20,p.y-26,40,8,4);ctx.fill();ctx.stroke();ctx.fillStyle='#07101c';ctx.beginPath();ctx.ellipse(p.x,p.y-22,12,3,0,0,7);ctx.fill();ctx.fillStyle=this.type==='Metal'?'#151515':'#fff';ctx.font='bold 12px sans-serif';ctx.textAlign='center';ctx.fillText(TYPES[this.type].letter,p.x,p.y-3);ctx.font='bold 6px sans-serif';ctx.fillText(TYPES[this.type].label.toUpperCase(),p.x,p.y+8);ctx.fillStyle='#ffffffcc';ctx.font='9px sans-serif';ctx.fillText('♻',p.x,p.y+18);ctx.restore()}
+  }
+  class SpeedBoost{
+    constructor(x,y){this.x=x;this.y=y;this.active=true;this.phase=Math.random()*6}
+    draw(t){if(!this.active)return;const p=iso(this.x,this.y),pulse=1+Math.sin(t*5+this.phase)*.12;ctx.save();ctx.translate(p.x,p.y-11);ctx.scale(pulse,pulse);ctx.shadowColor='#67e8f9';ctx.shadowBlur=18;ctx.fillStyle='#22d3ee';ctx.beginPath();ctx.arc(0,0,12,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='bold 18px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('⚡',0,1);ctx.restore()}
+  }
+  class BagUpgrade{
+    constructor(x,y){this.x=x;this.y=y;this.active=true}
+    draw(t){if(!this.active)return;const p=iso(this.x,this.y);ctx.save();ctx.translate(p.x,p.y-13+Math.sin(t*4)*2);ctx.shadowColor='#fbbf24';ctx.shadowBlur=18;ctx.fillStyle='#92400e';ctx.fillRect(-11,-10,22,22);ctx.fillStyle='#fbbf24';ctx.fillRect(-7,-15,14,6);ctx.shadowBlur=0;ctx.fillStyle='#fff';ctx.font='16px sans-serif';ctx.textAlign='center';ctx.fillText('🎒',0,7);ctx.restore()}
+  }
+  // Com o movimento visual vertical/horizontal no mapa isométrico, o herói percorre
+  // as casas de paridade par. Todos os itens interativos precisam usar essa malha.
+  const reachable=(x,y)=>(x+y)%2===0;
+  function occupied(x,y){return obstacles.some(o=>o.kind!=='flower'&&o.x===x&&o.y===y)||bins.some(b=>b.x===x&&b.y===y)}
+  function reachableCells(){
+    const start={x:7,y:7},queue=[start],seen=new Set(['7,7']),moves=[[-1,-1],[1,1],[-1,1],[1,-1]];
+    for(let i=0;i<queue.length;i++){const cur=queue[i];for(const [dx,dy] of moves){const x=cur.x+dx,y=cur.y+dy,key=x+','+y;if(inside(x,y)&&!occupied(x,y)&&!seen.has(key)){seen.add(key);queue.push({x,y})}}}
+    return queue;
+  }
+  function findWalkPath(start,goals){
+    const dirs=[[-1,-1],[1,1],[-1,1],[1,-1]],key=(x,y)=>x+','+y,goalSet=new Set(goals.map(g=>key(g.x,g.y))),queue=[start],seen=new Set([key(start.x,start.y)]),prev=new Map();let end=null;
+    for(let i=0;i<queue.length;i++){const cur=queue[i],ck=key(cur.x,cur.y);if(goalSet.has(ck)){end=cur;break}for(const [dx,dy] of dirs){const next={x:cur.x+dx,y:cur.y+dy},nk=key(next.x,next.y);if(inside(next.x,next.y)&&!occupied(next.x,next.y)&&!seen.has(nk)){seen.add(nk);prev.set(nk,cur);queue.push(next)}}}
+    if(!end)return[];const path=[];for(let cur=end;cur;cur=prev.get(key(cur.x,cur.y)))path.push(cur);return path.reverse();
+  }
+  function updateMouseMovement(){
+    if(state!=='play'||hero.x!==hero.tx)return;
+    if(mousePath.length){const next=mousePath.shift();hero.tx=next.x;hero.ty=next.y;return}
+    if(mouseDepositBin){const bin=mouseDepositBin;mouseDepositBin=null;tryDepositFromMouse(bin)}
+  }
+  function tryDepositFromMouse(bin){const near=Math.hypot(hero.x-bin.x,hero.y-bin.y)<=1.5;if(near)deposit(bin);else message('Não foi possível alcançar essa lixeira.','#ef4444')}
+  function addObstacles(){
+    if(level===2){const layouts=[[[4,4,'bench'],[10,8,'bench'],[3,9,'flower'],[5,9,'flower'],[9,3,'flower'],[8,10,'flower'],[12,4,'flower']],[[5,3,'bench'],[8,10,'bench'],[3,7,'flower'],[6,8,'flower'],[10,4,'flower'],[11,11,'flower'],[4,12,'flower']],[[3,5,'bench'],[11,9,'bench'],[5,11,'flower'],[7,3,'flower'],[9,5,'flower'],[4,8,'flower'],[12,6,'flower']]],layout=layouts[rand(layouts.length)];layout.forEach(o=>obstacles.push({x:o[0],y:o[1],kind:o[2]}))}
+    if(level===3){[[4,4,'bench'],[10,8,'bench'],[3,9,'flower'],[5,9,'flower'],[9,3,'flower'],[8,10,'flower'],[3,7,'cone'],[9,11,'cone']].forEach(o=>obstacles.push({x:o[0],y:o[1],kind:o[2]}))}
+    if(level===4){[[4,4,'bench'],[9,7,'bench'],[3,9,'flower'],[9,3,'flower'],[3,5,'rock'],[9,9,'rock'],[10,4,'umbrella'],[6,10,'umbrella']].forEach(o=>obstacles.push({x:o[0],y:o[1],kind:o[2]}))}
+  }
+  function init(lvl){
+    // Depois de duas derrotas, a terceira tentativa já começa com assistência.
+    const failKey='recicla-fails-'+lvl,savedFails=+(localStorage.getItem(failKey)||0);if(savedFails>=2)localStorage.setItem(failKey,3);
+    if(lvl===1){campaignResults={};localStorage.setItem('recicla-campaign-results','{}')}
+    level=lvl;const def=levelDefs[lvl];assistMode=+(localStorage.getItem('recicla-fails-'+lvl)||0)>=3;state='play';score=0;combo=1;time=def.time*(assistMode?1.35:1);total=assistMode?Math.max(8,def.count-4):def.count;deposited=0;allGreen=0;windClock=0;bagAlarmCooldown=0;boostTime=0;boostBeepSecond=0;boostRhythmClock=0;boostRhythmStep=0;urgencyClock=0;urgencyStep=0;wasInWater=false;mousePath=[];mouseDepositBin=null;trash=[];bins=[];obstacles=[];boosts=[];upgrades=[];nature=[];particles=[];clean=Array.from({length:MAP},()=>Array(MAP).fill(false));hero=new Hero();document.querySelector('#result').classList.remove('eco');document.querySelector('#campaign-summary').classList.add('hidden');
+    // Fileira espaçada: nenhuma lixeira cerca ou bloqueia a entrada de outra.
+    const spots=[[1,1],[1,3],[1,5],[1,7],[1,9]];def.types.forEach((type,i)=>bins.push(new Bin(spots[i][0],spots[i][1],type)));addObstacles();if(assistMode){let keptSolid=false;obstacles=obstacles.filter(o=>o.kind==='flower'||(!keptSolid&&(keptSolid=true)))}
+    // Somente casas confirmadas pela busca de caminho podem receber itens.
+    const cells=reachableCells().filter(c=>c.x>=3&&c.y>=3&&!(c.x===7&&c.y===7));
+    for(let i=cells.length-1;i>0;i--){const j=rand(i+1);[cells[i],cells[j]]=[cells[j],cells[i]]}
+    cells.slice(0,total).forEach(({x,y})=>{let type=def.types[rand(def.types.length)],water=level===4&&x+y>19;if(water&&Math.random()<.7)type=Math.random()<.65?'Plastico':'Vidro';trash.push(new Trash(x,y,type,water))});
+    if(level>=2){const used=new Set(trash.map(t=>t.x+','+t.y)),free=cells.filter(c=>!used.has(c.x+','+c.y));free.slice(0,level===4?3:level===3?4:3).forEach(c=>boosts.push(new SpeedBoost(c.x,c.y)));if(level===3&&free[5])upgrades.push(new BagUpgrade(free[5].x,free[5].y))}
+    show('game');startMusic(level);updateHUD();message(assistMode?'🌟 Modo assistência: mais tempo, mochila maior, menos lixo e obstáculos!':level===3?'O vento move papéis e plásticos. Procure a mochila 🎒!':level===4?'Na água, esquerda e direita ficam invertidas!':'Separe cada resíduo pela cor da lixeira.',assistMode?'#fbbf24':'#4ade80')
+  }
+  function isWater(x,y){return level===4&&x+y>19}
+  function move(dir){
+    if(state!=='play'||hero.x!==hero.tx)return;mousePath=[];mouseDepositBin=null;let d={up:[-1,-1],down:[1,1],left:[-1,1],right:[1,-1]}[dir];
+    // Na água/correnteza, os comandos laterais são invertidos intencionalmente.
+    if(isWater(hero.tx,hero.ty)){if(dir==='left')d=[1,-1];if(dir==='right')d=[-1,1]}
+    const nx=hero.tx+d[0],ny=hero.ty+d[1];if(!inside(nx,ny))return;
+    const bin=bins.find(b=>b.x===nx&&b.y===ny);if(bin){deposit(bin);return}if(occupied(nx,ny)){message('Obstáculo! Procure outro caminho.','#fb923c');return}hero.tx=nx;hero.ty=ny
+  }
+  function collect(){trash.forEach(t=>{if(!t.active)return;const dist=Math.hypot(hero.x-t.x,hero.y-t.y),reach=level===2?.95:level===3?.88:.72;if(dist<reach){if(hero.inventory.length>=hero.max){message('Mochila cheia! Vá até as lixeiras.','#ef4444');bagAlarm();return}t.active=false;hero.inventory.push(t.type);radial(t.x,t.y,3.3);audio('pick');const info=TYPES[t.type];message(`${info.letter} = ${info.label}: leve para a lixeira ${info.colorName}.`,info.color);updateHUD()}})}
+  function collectBoosts(){boosts.forEach(b=>{if(b.active&&Math.hypot(hero.x-b.x,hero.y-b.y)<.72){b.active=false;boostTime=Math.min(16,boostTime+8);score+=50;audio('good');message('⚡ ACELERAÇÃO! Movimento mais rápido por 8 segundos.','#22d3ee');updateHUD()}})}
+  function collectUpgrades(){upgrades.forEach(b=>{if(b.active&&Math.hypot(hero.x-b.x,hero.y-b.y)<.78){b.active=false;hero.max+=3;score+=100;audio('good');message('🎒 MOCHILA AMPLIADA! Capacidade aumentada em 3 espaços.','#fbbf24');updateHUD()}})}
+  function deposit(bin){
+    if(!hero.inventory.length){message('A mochila está vazia.');return}let i=hero.inventory.findIndex(t=>t===bin.type);
+    if(i<0){time=Math.max(0,time-6);combo=1;audio('bad');const carried=hero.inventory[hero.inventory.length-1],info=TYPES[carried];message(`LOCAL ERRADO! ${info.letter} = ${info.label} vai na lixeira ${info.colorName}. −6s`,'#ef4444');updateHUD();return}
+    hero.inventory.splice(i,1);deposited++;score+=100*combo;combo=Math.min(5,combo+1);const timeCap=levelDefs[level].time*(assistMode?1.35:1);time=Math.min(timeCap,time+2);audio('good');radial(bin.x,bin.y,2.7);updateHUD();if(deposited===total)victory()
+  }
+  function radial(cx,cy,r){for(let x=0;x<MAP;x++)for(let y=0;y<MAP;y++)if(Math.hypot(x-cx,y-cy)<=r)clean[x][y]=true;for(let i=0;i<22;i++)particles.push({x:cx,y:cy,a:Math.random()*7,s:.5+Math.random()*1.5,life:1})}
+  function registerFailure(){const key='recicla-fails-'+level;localStorage.setItem(key,Math.min(3,+(localStorage.getItem(key)||0)+1))}
+  function saveLevelResult(){campaignResults[level]={score,time:+time.toFixed(1)};localStorage.setItem('recicla-campaign-results',JSON.stringify(campaignResults))}
+  function renderCampaignSummary(){const box=document.querySelector('#campaign-summary'),body=document.querySelector('#summary-body');body.innerHTML='';let totalScore=0,totalTime=0;for(let n=1;n<=4;n++){const result=campaignResults[n],tr=document.createElement('tr');if(result){totalScore+=result.score;totalTime+=result.time}tr.innerHTML=`<td>${n} · ${levelDefs[n].name}</td><td>${result?result.score:'—'}</td><td>${result?result.time.toFixed(1)+'s':'—'}</td>`;body.appendChild(tr)}document.querySelector('#summary-score').textContent=totalScore;document.querySelector('#summary-time').textContent=totalTime.toFixed(1)+'s';box.classList.remove('hidden')}
+  function victory(){state='won';stopMusic();saveLevelResult();localStorage.setItem('recicla-fails-'+level,0);allGreen=1;for(let x=0;x<MAP;x++)for(let y=0;y<MAP;y++)clean[x][y]=true;const greenSpots=reachableCells().filter(p=>p.x>3&&p.y>2&&!occupied(p.x,p.y)&&!(level===4&&isWater(p.x,p.y)));for(let i=greenSpots.length-1;i>0;i--){const j=rand(i+1);[greenSpots[i],greenSpots[j]]=[greenSpots[j],greenSpots[i]]}nature=greenSpots.slice(0,14).map((p,i)=>({...p,kind:i%4===0?'flowerTree':'tree',scale:.8+Math.random()*.35}));unlocked=Math.max(unlocked,Math.min(4,level+1));localStorage.setItem('recicla-unlocked',unlocked);for(let i=0;i<140;i++)particles.push({x:Math.random()*MAP,y:Math.random()*MAP,a:Math.random()*7,s:.5+Math.random()*1.5,life:1.5});setTimeout(()=>{const scenes=['','🏫 🌳 🌼 🦋 🌱','🌳 🌷 🛝 🐦 🌻','🏙️ 🌳 🍃 🐝 🌿','🏖️ 🌊 🐢 🐠 🐚'];document.querySelector('#victory-landscape').textContent=scenes[level];document.querySelector('#result').classList.add('eco');document.querySelector('#result-title').textContent=level===4?'Praia recuperada! 🐢':'Área revitalizada! 🌱';document.querySelector('#result-text').textContent=level===4?'A areia está limpa, a água voltou a brilhar e os animais marinhos estão seguros!':'A vegetação floresceu, os animais voltaram e o cenário ganhou novas cores!';document.querySelector('#final-score').textContent=score;document.querySelector('#final-time').textContent=time.toFixed(1);if(level===4)renderCampaignSummary();document.querySelector('#next').textContent=level<4?'Próxima fase':'Voltar às fases';show('result')},2200)}
+  function updateWind(dt){if(level!==3)return;windClock+=dt;if(windClock<2.1)return;windClock=0;let moved=false;trash.filter(t=>t.active&&(t.type==='Papel'||t.type==='Plastico')).forEach(t=>{if(Math.random()>.42)return;const nx=Math.min(MAP-1,t.x+1),ny=Math.max(3,t.y-1);if(reachable(nx,ny)&&!occupied(nx,ny)&&!trash.some(o=>o!==t&&o.active&&o.x===nx&&o.y===ny)){t.x=nx;t.y=ny;moved=true}});if(moved)message('💨 Rajada! Papéis e plásticos mudaram de lugar.','white')}
+  function updateAreaStatus(){
+    const panel=document.querySelector('#area-status');panel.classList.toggle('hidden',level!==4);if(level!==4)return;
+    const nowInWater=isWater(Math.round(hero.x),Math.round(hero.y));panel.classList.toggle('water',nowInWater);
+    panel.textContent=nowInWater?'🌊 ÁGUA: esquerda e direita invertidas':'🏖 AREIA: controles normais';
+    if(nowInWater!==wasInWater){wasInWater=nowInWater;if(nowInWater){audio('bad');message('🌊 Você entrou no mar: ← e → foram invertidos pela correnteza!','#22d3ee')}else{audio('good');message('🏖 De volta à areia: controles laterais normais.','#f6d487')}}
+  }
+  function updateHUD(){const timer=document.querySelector('#timer');timer.querySelector('span').textContent=time.toFixed(1);timer.classList.toggle('urgent',time<=20&&time>7);timer.classList.toggle('critical',time<=7);document.querySelector('#score').textContent=score;document.querySelector('#combo').textContent=combo>1?'Combo '+combo+'×':'';document.querySelector('#progress span').textContent=deposited+'/'+total;document.querySelector('.bar div').style.width=(deposited/total*100)+'%';document.querySelector('#assist-status').classList.toggle('hidden',!assistMode);const speed=document.querySelector('#speed-status');speed.classList.toggle('hidden',boostTime<=0);speed.querySelector('span').textContent=Math.max(0,boostTime).toFixed(1);const box=document.querySelector('#inventory');box.innerHTML='';for(let i=0;i<hero.max;i++){const e=document.createElement('span');e.className='slot';if(hero.inventory[i]){const t=hero.inventory[i];e.style.background=TYPES[t].color;e.textContent=TYPES[t].letter}box.appendChild(e)}}
+  function drawGroundFlowers(p,x,y){const hash=((x+3)*73856093)^((y+7)*19349663),count=2+Math.abs(hash)%3;for(let i=0;i<count;i++){const ox=((hash>>(i*3))%19)-9,oy=9+((hash>>(i*4+2))%12),size=2+(Math.abs(hash+i)%2);ctx.strokeStyle='#28753a';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p.x+ox,p.y+oy+5);ctx.lineTo(p.x+ox,p.y+oy);ctx.stroke();ctx.fillStyle=['#f472b6','#fb7185','#c084fc','#fbbf24'][Math.abs(hash+i)%4];for(let petal=0;petal<4;petal++){const a=petal*Math.PI/2;ctx.beginPath();ctx.arc(p.x+ox+Math.cos(a)*size,p.y+oy+Math.sin(a)*size,size,0,7);ctx.fill()}ctx.fillStyle='#fde047';ctx.beginPath();ctx.arc(p.x+ox,p.y+oy,1.4,0,7);ctx.fill()}}
+  function drawBackdrop(t){
+    const beachProgress=level===4&&total?Math.max(0,Math.min(1,(total-trash.filter(o=>o.active).length)/total)):0,grad=ctx.createLinearGradient(0,0,0,H);grad.addColorStop(0,level===4?`hsl(198 ${4+beachProgress*76}% ${42+beachProgress*33}%)`:level===3?'#66717e':'#9ad7a2');grad.addColorStop(1,level===4?`hsl(202 ${3+beachProgress*62}% ${20+beachProgress*22}%)`:level===3?'#303944':'#416e4a');ctx.fillStyle=grad;ctx.fillRect(0,0,W,H);
+    ctx.globalAlpha=.18;ctx.fillStyle='#fff';for(let i=0;i<8;i++){const x=(i*157+t*5)%W,y=70+(i%3)*38;ctx.beginPath();ctx.ellipse(x,y,55,13,0,0,Math.PI*2);ctx.fill()}ctx.globalAlpha=1;
+    const vignette=ctx.createRadialGradient(W/2,H/2,220,W/2,H/2,650);vignette.addColorStop(.55,'transparent');vignette.addColorStop(1,'rgba(4,10,24,.45)');ctx.fillStyle=vignette;ctx.fillRect(0,0,W,H);
+  }
+  function drawTile(x,y,t){const p=iso(x,y),water=isWater(x,y),beachProgress=level===4&&total?Math.max(0,Math.min(1,(total-trash.filter(o=>o.active).length)/total)):0,shade=(x+y)%2?7:-7;let color;if(level===4&&water)color=`hsl(198 ${6+beachProgress*72}% ${32+shade*.35+beachProgress*22}%)`;else if(level===4)color=`hsl(44 ${3+beachProgress*82}% ${46+shade+beachProgress*17+(clean[x][y]?3:0)}%)`;else color=clean[x][y]?'#58bd70':level===3?'#686d73':((x+y)%2?'#707b6b':'#657160');if(x<4&&y<4)color=level===4?`hsl(44 ${3+beachProgress*62}% ${35+shade*.5+beachProgress*24}%)`:'#5e647d';ctx.fillStyle='#07121d77';ctx.beginPath();ctx.moveTo(p.x-TW/2,p.y+TH/2);ctx.lineTo(p.x,p.y+TH);ctx.lineTo(p.x,p.y+TH+6);ctx.lineTo(p.x-TW/2,p.y+TH/2+6);ctx.closePath();ctx.fill();ctx.fillStyle='#02091288';ctx.beginPath();ctx.moveTo(p.x+TW/2,p.y+TH/2);ctx.lineTo(p.x,p.y+TH);ctx.lineTo(p.x,p.y+TH+6);ctx.lineTo(p.x+TW/2,p.y+TH/2+6);ctx.closePath();ctx.fill();ctx.save();ctx.shadowColor='#02061788';ctx.shadowBlur=6;ctx.shadowOffsetY=4;ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(p.x,p.y);ctx.lineTo(p.x+TW/2,p.y+TH/2);ctx.lineTo(p.x,p.y+TH);ctx.lineTo(p.x-TW/2,p.y+TH/2);ctx.closePath();ctx.fill();ctx.restore();ctx.strokeStyle=clean[x][y]?'#fff3a0':'#ffffff38';ctx.stroke();if(water){const wave=Math.sin(t*3+x*.7+y)*2;ctx.strokeStyle=`rgba(230,252,255,${.25+beachProgress*.55})`;ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(p.x-18,p.y+15+wave);ctx.quadraticCurveTo(p.x,p.y+10-wave,p.x+18,p.y+15+wave);ctx.stroke();if(x+y===20){ctx.strokeStyle=`rgba(255,251,208,${.35+beachProgress*.55})`;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(p.x-TW/2+4,p.y+TH/2);ctx.lineTo(p.x,p.y+TH-2);ctx.stroke()}}else if(level===4&&(x*5+y)%5===0){ctx.fillStyle=`rgba(255,242,193,${.15+beachProgress*.6})`;ctx.beginPath();ctx.arc(p.x-7,p.y+18,1.5,0,7);ctx.arc(p.x+8,p.y+12,1,0,7);ctx.fill()}else if(level!==4&&clean[x][y]&&Math.abs(((x+3)*73856093)^((y+7)*19349663))%13<3){drawGroundFlowers(p,x,y)}}
+  function drawObstacle(o,t){const p=iso(o.x,o.y);ctx.save();ctx.fillStyle='#02061744';ctx.beginPath();ctx.ellipse(p.x,p.y+10,o.kind==='bench'?27:15,6,0,0,7);ctx.fill();if(o.kind==='bench'){const wood=ctx.createLinearGradient(0,p.y-20,0,p.y+8);wood.addColorStop(0,'#c9823f');wood.addColorStop(1,'#6b341b');ctx.fillStyle=wood;ctx.strokeStyle='#3f2418';ctx.lineWidth=2;ctx.beginPath();ctx.roundRect(p.x-24,p.y-11,48,10,3);ctx.fill();ctx.stroke();ctx.beginPath();ctx.roundRect(p.x-21,p.y-22,42,8,3);ctx.fill();ctx.stroke();ctx.strokeStyle='#374151';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(p.x-16,p.y-1);ctx.lineTo(p.x-16,p.y+13);ctx.moveTo(p.x+16,p.y-1);ctx.lineTo(p.x+16,p.y+13);ctx.stroke();ctx.fillStyle='#fbbf24';ctx.beginPath();ctx.arc(p.x-17,p.y-7,1.5,0,7);ctx.arc(p.x+17,p.y-7,1.5,0,7);ctx.fill()}else if(o.kind==='flower'){ctx.strokeStyle='#2f8b43';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(p.x,p.y+9);ctx.lineTo(p.x,p.y-10);ctx.stroke();for(let i=0;i<5;i++){const a=i*1.256;ctx.fillStyle=i%2?'#f9a8d4':'#fb7185';ctx.beginPath();ctx.arc(p.x+Math.cos(a)*6,p.y-11+Math.sin(a)*6,4,0,7);ctx.fill()}ctx.fillStyle='#fde047';ctx.beginPath();ctx.arc(p.x,p.y-11,3,0,7);ctx.fill()}else if(o.kind==='tree'){ctx.fillStyle='#70452b';ctx.fillRect(p.x-5,p.y-36,10,43);const crown=ctx.createRadialGradient(p.x-7,p.y-52,2,p.x,p.y-47,26);crown.addColorStop(0,'#8eee78');crown.addColorStop(1,'#176b38');ctx.fillStyle=crown;ctx.beginPath();ctx.arc(p.x,p.y-48,25,0,7);ctx.fill()}else if(o.kind==='umbrella'){ctx.fillStyle='#e5e7eb';ctx.fillRect(p.x-2,p.y-29,4,37);ctx.fillStyle='#ef4444';ctx.beginPath();ctx.arc(p.x,p.y-31,26,Math.PI,0);ctx.fill();ctx.fillStyle='#fff';ctx.beginPath();ctx.moveTo(p.x,p.y-31);ctx.arc(p.x,p.y-31,26,Math.PI,Math.PI*1.34);ctx.closePath();ctx.fill()}else if(o.kind==='rock'){const rock=ctx.createRadialGradient(p.x-5,p.y-9,2,p.x,p.y-2,15);rock.addColorStop(0,'#cbd5e1');rock.addColorStop(1,'#475569');ctx.fillStyle=rock;ctx.beginPath();ctx.moveTo(p.x-14,p.y+4);ctx.lineTo(p.x-10,p.y-10);ctx.lineTo(p.x+2,p.y-15);ctx.lineTo(p.x+14,p.y-4);ctx.lineTo(p.x+10,p.y+6);ctx.closePath();ctx.fill()}else{const cone=ctx.createLinearGradient(p.x-8,0,p.x+8,0);cone.addColorStop(0,'#c2410c');cone.addColorStop(.5,'#fb923c');cone.addColorStop(1,'#9a3412');ctx.fillStyle=cone;ctx.beginPath();ctx.moveTo(p.x,p.y-21);ctx.lineTo(p.x-10,p.y+5);ctx.lineTo(p.x+10,p.y+5);ctx.closePath();ctx.fill();ctx.fillStyle='#fff';ctx.fillRect(p.x-7,p.y-6,14,4);ctx.fillStyle='#374151';ctx.fillRect(p.x-14,p.y+4,28,5)}ctx.restore()}
+  function drawBeachNature(n,t){
+    const p=iso(n.x,n.y),s=.78+(n.scale||1)*.22,kind=Math.abs(n.x*17+n.y*11)%4;
+    ctx.save();ctx.translate(p.x,p.y+8);ctx.scale(s,s);
+    ctx.fillStyle='#5b3a1733';ctx.beginPath();ctx.ellipse(0,5,17,5,0,0,7);ctx.fill();
+    if(kind===0){
+      // Estrela-do-mar.
+      ctx.rotate((n.x+n.y)*.35);ctx.fillStyle='#ff765f';ctx.strokeStyle='#ffd0a5';ctx.lineWidth=1.5;ctx.beginPath();
+      for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?6:17;ctx.lineTo(Math.cos(a)*r,Math.sin(a)*r)}
+      ctx.closePath();ctx.fill();ctx.stroke();ctx.fillStyle='#ffd166';ctx.beginPath();ctx.arc(0,0,3,0,7);ctx.fill();
+    }else if(kind===1){
+      // Siri.
+      const bob=Math.sin(t*4+n.x)*1.5;ctx.translate(0,bob);ctx.strokeStyle='#d83b31';ctx.lineWidth=3;ctx.lineCap='round';
+      ctx.beginPath();ctx.moveTo(-10,0);ctx.lineTo(-19,-7);ctx.moveTo(10,0);ctx.lineTo(19,-7);ctx.moveTo(-8,5);ctx.lineTo(-17,12);ctx.moveTo(8,5);ctx.lineTo(17,12);ctx.stroke();
+      ctx.fillStyle='#ef5a47';ctx.beginPath();ctx.ellipse(0,0,13,10,0,0,7);ctx.fill();
+      ctx.beginPath();ctx.arc(-19,-9,5,0,7);ctx.arc(19,-9,5,0,7);ctx.fill();
+      ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(-5,-5,2.5,0,7);ctx.arc(5,-5,2.5,0,7);ctx.fill();
+      ctx.fillStyle='#17202a';ctx.beginPath();ctx.arc(-5,-5,1,0,7);ctx.arc(5,-5,1,0,7);ctx.fill();
+    }else if(kind===2){
+      // Concha brilhante.
+      const g=ctx.createRadialGradient(-4,-5,1,0,0,18);g.addColorStop(0,'#fff7df');g.addColorStop(.45,'#ffcf9f');g.addColorStop(1,'#d98b68');
+      ctx.fillStyle=g;ctx.strokeStyle='#fff1d2';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(0,2,16,Math.PI,0);ctx.lineTo(0,8);ctx.closePath();ctx.fill();ctx.stroke();
+      ctx.strokeStyle='#b76558';ctx.lineWidth=1;for(let i=-10;i<=10;i+=5){ctx.beginPath();ctx.moveTo(0,8);ctx.lineTo(i,-9+Math.abs(i)*.25);ctx.stroke()}
+    }else{
+      // Gaivota pousada na areia.
+      const bob=Math.sin(t*2+n.y)*1.2;ctx.translate(0,-11+bob);ctx.fillStyle='#f8fafc';ctx.strokeStyle='#cbd5e1';ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.ellipse(0,0,13,8,0,0,7);ctx.fill();ctx.stroke();
+      ctx.beginPath();ctx.arc(10,-6,6,0,7);ctx.fill();ctx.stroke();
+      ctx.fillStyle='#f59e0b';ctx.beginPath();ctx.moveTo(15,-7);ctx.lineTo(23,-4);ctx.lineTo(15,-2);ctx.closePath();ctx.fill();
+      ctx.fillStyle='#334155';ctx.beginPath();ctx.arc(12,-8,1.2,0,7);ctx.fill();
+      ctx.strokeStyle='#d97706';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-3,7);ctx.lineTo(-5,14);ctx.moveTo(4,7);ctx.lineTo(5,14);ctx.stroke();
+    }
+    ctx.restore();
+  }
+  function drawNature(n,t){
+    if(level===4){drawBeachNature(n,t);return}
+    const p=iso(n.x,n.y),s=n.scale||1;ctx.save();ctx.translate(p.x,p.y+5);ctx.scale(s,s);ctx.fillStyle='#0003';ctx.beginPath();ctx.ellipse(0,4,22,7,0,0,7);ctx.fill();const trunk=ctx.createLinearGradient(-6,0,7,0);trunk.addColorStop(0,'#5b351e');trunk.addColorStop(.55,'#a06632');trunk.addColorStop(1,'#4a2b19');ctx.fillStyle=trunk;ctx.fillRect(-6,-40,12,43);const crown=ctx.createRadialGradient(-7,-56,3,0,-48,29);crown.addColorStop(0,n.kind==='flowerTree'?'#f9a8d4':'#9af07b');crown.addColorStop(.45,n.kind==='flowerTree'?'#4fbd68':'#3cab55');crown.addColorStop(1,'#176b38');ctx.fillStyle=crown;[[0,-56],[-18,-47],[18,-47],[-10,-67],[11,-67]].forEach(([x,y])=>{ctx.beginPath();ctx.arc(x,y,17,0,7);ctx.fill()});ctx.fillStyle='#fff7';ctx.beginPath();ctx.arc(-10,-69,5,0,7);ctx.fill();if(n.kind==='flowerTree'){ctx.fillStyle='#fff0f6';for(let i=0;i<7;i++){const a=i*2.4;ctx.beginPath();ctx.arc(Math.sin(a)*20,-55+Math.cos(a)*16,3,0,7);ctx.fill()}}ctx.restore()
+  }
+  function draw(t){
+    ctx.clearRect(0,0,W,H);drawBackdrop(t);if(state!=='play'&&state!=='won')return;
+    for(let s=0;s<MAP*2-1;s++)for(let x=0;x<MAP;x++){let y=s-x;if(y>=0&&y<MAP)drawTile(x,y,t)}
+    obstacles.sort((a,b)=>a.x+a.y-b.x-b.y).forEach(o=>drawObstacle(o,t));
+    nature.sort((a,b)=>a.x+a.y-b.x-b.y).forEach(n=>drawNature(n,t));
+    bins.forEach(b=>b.draw());trash.forEach(o=>o.draw(t));boosts.forEach(b=>b.draw(t));upgrades.forEach(b=>b.draw(t));hero.draw();
+    particles.forEach(p=>{const q=iso(p.x,p.y);ctx.globalAlpha=Math.min(1,p.life);ctx.fillStyle=level===4?'#ffe47a':'#7cff8c';ctx.beginPath();ctx.arc(q.x+Math.cos(p.a)*(1-p.life)*65,q.y+Math.sin(p.a)*(1-p.life)*30,4,0,7);ctx.fill();ctx.globalAlpha=1});
+    if(allGreen){ctx.fillStyle=level===4?'rgba(255,205,63,'+(.13+Math.sin(t*4)*.04)+')':'rgba(53,210,86,'+(.12+Math.sin(t*4)*.04)+')';ctx.fillRect(0,0,W,H)}
+    if(level===3){ctx.fillStyle='#ffffffaa';ctx.font='bold 15px sans-serif';ctx.fillText('VENTO  ➜',25,750)}
+    if(level===4){ctx.fillStyle='#fff';ctx.font='bold 14px sans-serif';ctx.fillText('🌊 Observe o indicador: controles laterais mudam no mar',20,750)}
+  }
+  function loop(now){const dt=Math.min(.1,(now-last)/1000);last=now;if(bagAlarmCooldown>0)bagAlarmCooldown-=dt;if(state==='play'){time-=dt;if(time<=20&&time>0){urgencyClock+=dt;const interval=time>10?.46:time>5?.28:.15;if(urgencyClock>=interval){urgencyClock=0;playUrgencyTick()}}if(boostTime>0){boostTime-=dt;boostRhythmClock+=dt;if(boostRhythmClock>=.19){boostRhythmClock=0;playBoostTick()}const sec=Math.ceil(boostTime);if(sec<=3&&sec>0&&sec!==boostBeepSecond){boostBeepSecond=sec;audio('pick');message(`⚡ Aceleração termina em ${sec}...`,'#22d3ee')}if(boostTime<=0){boostTime=0;boostBeepSecond=0;boostRhythmClock=0;audio('bad');message('A aceleração terminou.','#94a3b8')}}if(time<=0){time=0;registerFailure();state='lost';stopMusic();document.querySelector('#result').classList.remove('eco');document.querySelector('#result-title').textContent='O tempo acabou! ⏳';document.querySelector('#result-text').textContent='Tente separar por cores e esvaziar a mochila com frequência.';document.querySelector('#final-score').textContent=score;document.querySelector('#final-time').textContent='0.0';document.querySelector('#next').textContent='Tentar novamente';show('result')}updateMouseMovement();hero.update(dt);updateAreaStatus();collect();collectBoosts();collectUpgrades();updateWind(dt);particles.forEach(p=>p.life-=dt*1.5);particles=particles.filter(p=>p.life>0);if(msgTimer>0){msgTimer-=dt;if(msgTimer<=0)document.querySelector('#message').classList.remove('show')}updateHUD()}draw(now/1000);requestAnimationFrame(loop)}
+  function showTutorial(lvl){pendingLevel=lvl;state='tutorial';stopMusic();document.querySelector('#tutorial-title').textContent=lvl===1?'Como jogar':'Novidades da fase '+lvl;document.querySelector('#tutorial-phase').textContent=levelDefs[lvl].name;const visualData={1:[['🖱️⌨️','Mouse ou teclado'],['🥫','Coletar lixo'],['🎒','Guardar'],['♻️','Separar'],['🌳','Revitalizar']],2:[['🌷','Flores'],['BENCH','Desviar'],['⚡','Acelerar'],['🟦🟥🟨🟩','4 cores']],3:[['💨','Vento'],['📄','Papel'],['🎒➕','Ampliar'],['🚧','Obstáculos']],4:[['🏖️','Praia cinza'],['🍾','Coletar garrafas'],['🌊','Água'],['🌞','Areia amarela']]};const visual=document.querySelector('#tutorial-visual');visual.innerHTML='';visualData[lvl].forEach((item,i)=>{const step=document.createElement('div');step.className='tutorial-step';if(item[0]==='BENCH'){const bench=document.createElement('b');bench.className='bench-mini';bench.innerHTML='<i></i><i></i>';step.appendChild(bench)}else{const icon=document.createElement('b');icon.textContent=item[0];step.appendChild(icon)}const label=document.createElement('span');label.textContent=item[1];step.appendChild(label);visual.appendChild(step);if(i<visualData[lvl].length-1){const arrow=document.createElement('div');arrow.className='tutorial-arrow';arrow.textContent='›';visual.appendChild(arrow)}});const list=document.querySelector('#tutorial-list');list.innerHTML='';tutorials[lvl].forEach(text=>{const li=document.createElement('li');li.textContent=text;list.appendChild(li)});show('tutorial')}
+  function refreshLevels(){document.querySelectorAll('.level').forEach(c=>c.classList.toggle('locked',+c.dataset.level>unlocked))}
+  async function requestMobileDisplay(){
+    if(!matchMedia('(hover:none) and (pointer:coarse)').matches)return;
+    document.body.classList.add('mobile-session');
+    try{const root=document.documentElement;if(!document.fullscreenElement){if(root.requestFullscreen)await root.requestFullscreen({navigationUI:'hide'});else if(root.webkitRequestFullscreen)root.webkitRequestFullscreen()}}catch{}
+    try{if(screen.orientation?.lock)await screen.orientation.lock('landscape')}catch{}
+  }
+  document.querySelector('#play').onclick=()=>{requestMobileDisplay();unlocked=Math.max(1,+(localStorage.getItem('recicla-unlocked')||1));refreshLevels();show('level-screen')};
+  document.querySelector('#back').onclick=()=>show('menu');
+  document.querySelector('#open-credits').onclick=()=>show('credits');
+  document.querySelector('#credits-back').onclick=()=>show('menu');
+  document.querySelectorAll('.level').forEach(c=>c.onclick=()=>{const n=+c.dataset.level;if(n<=unlocked)showTutorial(n)});
+  document.querySelector('#tutorial-back').onclick=()=>{refreshLevels();show('level-screen')};
+  document.querySelector('#tutorial-start').onclick=()=>{requestMobileDisplay();init(pendingLevel)};
+  document.querySelector('#next').onclick=()=>{if(state==='lost')showTutorial(level);else if(level<4)showTutorial(level+1);else{refreshLevels();show('level-screen')}};
+  document.querySelector('#pause').onclick=pauseGame;
+  document.querySelector('#resume').onclick=resumeGame;
+  document.querySelector('#restart').onclick=()=>openConfirmation('restart');
+  document.querySelector('#exit').onclick=()=>openConfirmation('exit');
+  document.querySelector('#cancel-action').onclick=closeConfirmation;
+  document.querySelector('#confirm-action').onclick=()=>{
+    const action=pendingAction;document.querySelector('#confirm').classList.add('hidden');pendingAction=null;
+    if(action==='restart')init(level);
+    else{stopMusic();state='levels';refreshLevels();show('level-screen')}
+  };
+  canvas.addEventListener('pointerdown',e=>{
+    if(state!=='play')return;const rect=canvas.getBoundingClientRect(),mx=(e.clientX-rect.left)*W/rect.width,my=(e.clientY-rect.top)*H/rect.height,start={x:Math.round(hero.tx),y:Math.round(hero.ty)};
+    const clickedBin=bins.find(b=>{const p=iso(b.x,b.y);return Math.hypot(mx-p.x,my-(p.y-5))<30});
+    if(clickedBin){const goals=[[-1,-1],[1,1],[-1,1],[1,-1]].map(([dx,dy])=>({x:clickedBin.x+dx,y:clickedBin.y+dy})).filter(p=>inside(p.x,p.y)&&!occupied(p.x,p.y)),path=findWalkPath(start,goals);if(path.length){mousePath=path.slice(1);mouseDepositBin=clickedBin;message(`Caminhando até a lixeira ${TYPES[clickedBin.type].colorName}...`,TYPES[clickedBin.type].color)}else message('Essa lixeira está sem caminho livre.','#ef4444');return}
+    const rx=mx-OX,ry=my-OY-TH/2,gx=Math.round((rx/(TW/2)+ry/(TH/2))/2),gy=Math.round((ry/(TH/2)-rx/(TW/2))/2);
+    if(!inside(gx,gy)||!reachable(gx,gy)){message('Clique no centro de um quadrado acessível.','#fbbf24');return}if(occupied(gx,gy)){message('Esse quadrado está bloqueado por um obstáculo.','#ef4444');return}const path=findWalkPath(start,[{x:gx,y:gy}]);if(path.length){mousePath=path.slice(1);mouseDepositBin=null}else message('Não existe caminho livre até esse ponto.','#ef4444')
+  });
+  document.querySelectorAll('.move').forEach(b=>{b.addEventListener('pointerdown',e=>{e.preventDefault();move(b.dataset.dir)})});
+  addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&state==='confirm'){e.preventDefault();closeConfirmation();return}
+    if(e.key==='Escape'&&state==='paused'){e.preventDefault();resumeGame();return}
+    if(e.key==='Escape'&&state==='play'){e.preventDefault();pauseGame();return}
+    const key=e.key.toLowerCase(),dir={arrowup:'up',w:'up',arrowdown:'down',s:'down',arrowleft:'left',a:'left',arrowright:'right',d:'right'}[key];if(dir){e.preventDefault();move(dir)}
+  });
+  requestAnimationFrame(loop);
+</script>
+</body>
+</html>
