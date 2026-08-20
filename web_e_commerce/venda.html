@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Detalhes do Produto | EletroShop</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>⚡ EletroShop</h1>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="produtos.html">Produtos</a>
+      <a href="carrinho.html">Carrinho</a>
+      <a class="nav-link text-white" href="listar_clientes.php">Clientes</a>
+    </nav>
+  </header>
+
+  <main class="container">
+    <h2 id="nome-produto">Detalhes do Produto</h2>
+    <form id="form-venda">
+      <p><strong>Valor:</strong> R$ <span id="valor-produto">0.00</span> <span id="unidade">unidade</span></p>
+
+      <div id="campos-dinamicos"></div>
+
+      <label>
+        Quantidade:
+        <input type="number" name="quantidade" required min="1" value="1" />
+      </label>
+
+      <div class="botoes-venda">
+        <button type="button" onclick="comprarAgora()">Comprar</button>
+        <button type="button" onclick="adicionarAoCarrinhoDetalhado()">Adicionar ao Carrinho</button>
+      </div>
+    </form>
+
+    <a href="produtos.html" class="voltar">← Voltar aos produtos</a>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 EletroShop - Todos os direitos reservados</p>
+  </footer>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

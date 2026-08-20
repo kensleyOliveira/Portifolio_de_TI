@@ -1,0 +1,174 @@
+:root {
+  --cor-principal: #009688;
+  --cor-secundaria: #f0f0f0;
+  --cor-texto: #333;
+  --cor-clara: #ffffff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: "Segoe UI", sans-serif;
+  background-color: var(--cor-secundaria);
+  color: var(--cor-texto);
+  line-height: 1.6;
+}
+
+header {
+  background-color: var(--cor-principal);
+  color: white;
+  padding: 20px 0;
+}
+
+header h1 {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 10px;
+}
+
+nav {
+  text-align: center;
+  margin-top: 10px;
+}
+
+nav a {
+  color: white;
+  text-decoration: none;
+  margin: 0 15px;
+  font-weight: bold;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+main.container {
+  max-width: 560px; 
+  margin: 30px auto;
+  padding: 0 20px;
+  background-color: var(--cor-clara);
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.05);
+}
+
+main h2 {
+  text-align: center;
+  margin: 20px 0;
+  font-size: 1.8rem;
+}
+
+.produtos-container {
+  display: flex;
+  justify-content: center;
+  gap: 40px;
+  flex-wrap: wrap;
+  padding: 20px;
+}
+
+.produto-card {
+  background-color: var(--cor-clara);
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  width: 240px;
+  padding: 15px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  text-align: center;
+}
+
+.produto-card img {
+  width: 100%;
+  border-radius: 5px;
+  margin-bottom: 10px;
+}
+
+.produto-card h3 {
+  margin: 10px 0;
+}
+
+.produto-card p {
+  color: green;
+  font-weight: bold;
+  margin-bottom: 10px;
+}
+
+.produto-card button {
+  background-color: var(--cor-principal);
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: 0.3s;
+}
+
+.produto-card button:hover {
+  background-color: #00796B;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+}
+
+form input,
+form textarea {
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+}
+
+form button {
+  background-color: var(--cor-principal);
+  color: white;
+  border: none;
+  padding: 10px;
+  cursor: pointer;
+  font-size: 1rem;
+  border-radius: 4px;
+}
+
+form button:hover {
+  background-color: #00796B;
+}
+
+footer {
+  background-color: #222;
+  color: white;
+  text-align: center;
+  padding: 15px;
+  margin-top: 50px;
+}
+
+.voltar {
+  display: block;
+  margin: 30px auto 20px;
+  text-align: center;
+  text-decoration: none;
+  color: var(--cor-principal);
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .produtos-container {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  nav a {
+    display: block;
+    margin: 10px 0;
+  }
+
+  .banner-img {
+  color: black;
+}
+
+
+}

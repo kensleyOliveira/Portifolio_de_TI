@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pagamento | EletroShop</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="bg-primary text-white py-4">
+    <div class="container text-center">
+      <h1>⚡ EletroShop</h1>
+      <p>Etapa Final: Pagamento</p>
+    </div>
+  </header>
+
+  <main class="container my-5">
+    <h2 class="text-center mb-4">Escolha o Método de Pagamento</h2>
+    <form action="atualizar_pagamento.php" method="POST" class="mx-auto" style="max-width: 500px;">
+      <input type="hidden" id="venda_id" name="venda_id" value="">
+
+      <div class="list-group">
+        <label class="list-group-item">
+          <input class="form-check-input me-1" type="radio" name="metodo_pagamento" value="PIX" required>
+          PIX
+        </label>
+        <label class="list-group-item">
+          <input class="form-check-input me-1" type="radio" name="metodo_pagamento" value="Dinheiro">
+          Dinheiro
+        </label>
+        <label class="list-group-item">
+          <input class="form-check-input me-1" type="radio" name="metodo_pagamento" value="Cartao de Credito">
+          Cartão de Crédito
+        </label>
+        <label class="list-group-item">
+          <input class="form-check-input me-1" type="radio" name="metodo_pagamento" value="Cartao de Debito">
+          Cartão de Débito
+        </label>
+        <label class="list-group-item">
+          <input class="form-check-input me-1" type="radio" name="metodo_pagamento" value="Boleto">
+          Boleto
+        </label>
+      </div>
+
+      <button type="submit" class="btn btn-success w-100 mt-4">Confirmar Pagamento</button>
+    </form>
+  </main>
+
+  <footer class="bg-dark text-white text-center py-3 mt-5">
+    <p>&copy; 2025 EletroShop</p>
+  </footer>
+
+  <script>
+    // Pega o venda_id da URL e o insere no campo hidden do formulário
+    document.addEventListener("DOMContentLoaded", function() {
+      const params = new URLSearchParams(window.location.search);
+      const vendaId = params.get('venda_id');
+      if (vendaId) {
+        document.getElementById('venda_id').value = vendaId;
+      } else {
+        alert('ID da venda não encontrado. Retornando para a página inicial.');
+        window.location.href = 'index.html';
+      }
+    });
+  </script>
+</body>
+</html>

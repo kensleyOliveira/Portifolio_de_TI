@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Contato | EletroShop</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="bg-primary text-white py-4">
+    <div class="container text-center">
+      <h1>⚡ EletroShop</h1>
+      <nav class="nav justify-content-center mt-3">
+        <a class="nav-link text-white" href="index.html">Home</a>
+        <a class="nav-link text-white" href="produtos.html">Produtos</a>
+        <a class="nav-link text-white" href="dicas.html">Dicas</a>
+        <a class="nav-link text-white" href="contato.html">Contato</a>
+        <a class="nav-link text-white" href="carrinho.html">Carrinho</a>
+        <a class="nav-link text-white" href="cadastro.html">Cadastro</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container my-5">
+    <h2 class="text-center mb-4">Fale Conosco</h2>
+    <form id="form-contato" class="mx-auto" style="max-width: 600px;">
+      <input type="text" class="form-control mb-3" placeholder="Nome" required />
+      <input type="email" class="form-control mb-3" placeholder="E-mail" required />
+      <textarea class="form-control mb-3" rows="5" placeholder="Mensagem" required></textarea>
+      <button type="submit" class="btn btn-success w-100">Enviar</button>
+    </form>
+    <div class="text-center">
+      <a href="index.html" class="voltar">← Voltar para Home</a>
+    </div>
+  </main>
+
+  <footer class="bg-dark text-white text-center py-3 mt-5">
+    <p>&copy; 2025 EletroShop - Todos os direitos reservados</p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="script.js"></script>
+
+  <!-- Script extra para validar envio do contato -->
+  <script>
+    $(document).ready(function() {
+      $("#form-contato").on("submit", function(e) {
+        e.preventDefault();
+        alert("Obrigado por entrar em contato! Em breve responderemos sua mensagem.");
+        $(this).trigger("reset");
+      });
+    });
+  </script>
+</body>
+</html>
