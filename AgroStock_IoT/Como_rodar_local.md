@@ -65,4 +65,3 @@ Caso não tenha o microcontrolador ESP32 montado com o sensor DHT22 no momento, 
 
 ---
 
-Basta copiar este conteúdo, ajustar as partes como a URL do repositório ou o nome exato do arquivo Python (se for diferente), e colar no final do documento que criamos anteriormente. Seu portfólio ficará com uma apresentação técnica impecável!
